@@ -10,6 +10,7 @@ use nom::combinator::{all_consuming, map_res};
 use nom::IResult;
 use nom::multi::separated_list1;
 use nom::sequence::preceded;
+use num::Integer;
 
 #[derive(Clone, Copy, Debug)]
 struct DialRotation(i64);
@@ -41,18 +42,43 @@ pub fn part1(input: &str) -> Result<u64> {
 	const DIAL_SIZE: i64 = 100;
 
 	let mut dial = DIAL_START;
-	let mut dial_hit_zero_count = 0;
+	let mut dial_stopped_on_zero_count = 0;
 	for DialRotation(rotation) in rotations {
 		dial = (dial + rotation) % DIAL_SIZE;
-		if dial == 0 { dial_hit_zero_count += 1 }
+		if dial == 0 { dial_stopped_on_zero_count += 1 }
 	}
 
-	Ok(dial_hit_zero_count)
+	Ok(dial_stopped_on_zero_count)
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let rotations = parse(input);
+
+	const DIAL_START: i64 = 50;
+	const DIAL_SIZE: i64 = 100;
+
+	let mut dial = DIAL_START;
+	let mut dial_touched_zero_count = 0;
+	for DialRotation(rotation) in rotations {
+
+		let (zero_passes, new_dial) = (dial + rotation).div_rem(&DIAL_SIZE);
+
+		dial_touched_zero_count += zero_passes.unsigned_abs();
+		if new_dial >= 0 {
+			dial = new_dial;
+			if dial == 0 && rotation.is_negative() {
+				dial_touched_zero_count += 1;
+			}
+		} else {
+			if dial != 0 {
+				dial_touched_zero_count += 1;
+			}
+			dial = new_dial + DIAL_SIZE;
+		}
+
+	}
+
+	Ok(dial_touched_zero_count)
 }
 
 #[cfg(test)]
@@ -78,7 +104,7 @@ L82";
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(6, part2(TEST)?);
 		Ok(())
 	}
 }
