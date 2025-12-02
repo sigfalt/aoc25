@@ -76,7 +76,7 @@ pub fn part2(input: &str) -> Result<u64> {
 	let ranges = parse(input);
 	let max_range_end = ranges.iter().map(|r| *r.end()).max().unwrap();
 
-	let mut invalid_nums: BTreeSet<u64> = BTreeSet::new();
+	let mut invalid_sum = 0;
 	let mut checked_nums: BTreeSet<u64> = BTreeSet::new();
 	let mut invalid_prefix_num = 1;
 	loop{
@@ -96,14 +96,14 @@ pub fn part2(input: &str) -> Result<u64> {
 
 			checked_nums.insert(invalid_num);
 			if ranges.iter().any(|r| r.contains(&invalid_num)) {
-				invalid_nums.insert(invalid_num);
+				invalid_sum += invalid_num;
 			}
 		}
 
 		invalid_prefix_num += 1;
 	}
 
-	Ok(invalid_nums.iter().sum())
+	Ok(invalid_sum)
 }
 
 #[cfg(test)]
