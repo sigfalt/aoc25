@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 
+use std::collections::BTreeSet;
 use std::ops::RangeInclusive;
 use anyhow::*;
 use itertools::Itertools;
@@ -72,8 +73,37 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let ranges = parse(input);
+	let max_range_end = ranges.iter().map(|r| *r.end()).max().unwrap();
+
+	let mut invalid_nums: BTreeSet<u64> = BTreeSet::new();
+	let mut checked_nums: BTreeSet<u64> = BTreeSet::new();
+	let mut invalid_prefix_num = 1;
+	loop{
+		let invalid_prefix = invalid_prefix_num.to_string();
+		let min_invalid_num = invalid_prefix.repeat(2);
+		let min_invalid_num = min_invalid_num.parse::<u64>().unwrap();
+		if min_invalid_num > max_range_end {
+			break;
+		}
+
+		for repetitions in 2.. {
+			let invalid_num_str = invalid_prefix.repeat(repetitions);
+			let invalid_num = invalid_num_str.parse::<u64>().unwrap();
+			if invalid_num > max_range_end || checked_nums.contains(&invalid_num) {
+				break;
+			}
+
+			checked_nums.insert(invalid_num);
+			if ranges.iter().any(|r| r.contains(&invalid_num)) {
+				invalid_nums.insert(invalid_num);
+			}
+		}
+
+		invalid_prefix_num += 1;
+	}
+
+	Ok(invalid_nums.iter().sum())
 }
 
 #[cfg(test)]
@@ -90,7 +120,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(4174379265, part2(TEST)?);
 		Ok(())
 	}
 }
