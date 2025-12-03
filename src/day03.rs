@@ -1,4 +1,6 @@
 #![allow(unused_imports)]
+
+use std::cmp::max;
 use anyhow::*;
 use itertools::Itertools;
 use nom::character::complete::{line_ending, satisfy};
@@ -45,10 +47,10 @@ pub fn part1(input: &str) -> Result<u64> {
 		// find max joltage in the bank, excluding the last battery
 		// short circuit for the first 9 joltage battery found
 		let (mut max_ix, mut max_joltage) = (0, 0);
-		for (ix, Joltage(j)) in bank[..(bank.len() - 1)].iter().enumerate() {
-			if *j > max_joltage {
+		for (ix, &Joltage(j)) in bank[..(bank.len() - 1)].iter().enumerate() {
+			if j > max_joltage {
 				max_ix = ix;
-				max_joltage = *j;
+				max_joltage = j;
 			}
 			if max_joltage == 9 {
 				break;
@@ -61,8 +63,43 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let battery_banks = parse(input);
+
+	fn get_max_joltage(
+		remaining_bank: &[Joltage],
+		remaining_batteries: usize,
+		accumulated_joltage: u64
+	) -> u64 {
+		if remaining_batteries == 0 {
+			return accumulated_joltage;
+		}
+
+		let selectable_bank = &remaining_bank[..(remaining_bank.len() - remaining_batteries + 1)];
+		let (mut max_ix, mut max_joltage) = (0, 0);
+		for (ix, &Joltage(j)) in selectable_bank.iter().enumerate() {
+			if j > max_joltage {
+				max_ix = ix;
+				max_joltage = j;
+			}
+			if max_joltage == 9 {
+				break;
+			}
+		}
+
+		get_max_joltage(
+			&remaining_bank[(max_ix + 1)..],
+			remaining_batteries - 1,
+			(accumulated_joltage * 10) + max_joltage as u64
+		)
+	}
+
+	const BATTERIES_PER_BANK: usize = 12;
+
+	let total_joltage = battery_banks.into_iter()
+		.map(|BatteryBank(bank)| get_max_joltage(&bank, BATTERIES_PER_BANK, 0))
+		.sum();
+
+	Ok(total_joltage)
 }
 
 #[cfg(test)]
@@ -82,7 +119,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(3121910778619, part2(TEST)?);
 		Ok(())
 	}
 }
