@@ -65,7 +65,20 @@ pub fn part1(input: &str) -> Result<u64> {
 pub fn part2(input: &str) -> Result<u64> {
 	let battery_banks = parse(input);
 
-	fn get_max_joltage(
+	const BATTERIES_PER_BANK: usize = 12;
+
+	let total_joltage = battery_banks.into_iter()
+		.map(|BatteryBank(bank)| get_max_joltage(&bank, BATTERIES_PER_BANK))
+		.sum();
+
+	Ok(total_joltage)
+}
+
+fn get_max_joltage(
+	battery_bank: &[Joltage],
+	batteries_to_use: usize,
+) -> u64 {
+	fn get_max_joltage_rec(
 		remaining_bank: &[Joltage],
 		remaining_batteries: usize,
 		accumulated_joltage: u64
@@ -86,20 +99,14 @@ pub fn part2(input: &str) -> Result<u64> {
 			}
 		}
 
-		get_max_joltage(
+		get_max_joltage_rec(
 			&remaining_bank[(max_ix + 1)..],
 			remaining_batteries - 1,
 			(accumulated_joltage * 10) + max_joltage as u64
 		)
 	}
 
-	const BATTERIES_PER_BANK: usize = 12;
-
-	let total_joltage = battery_banks.into_iter()
-		.map(|BatteryBank(bank)| get_max_joltage(&bank, BATTERIES_PER_BANK, 0))
-		.sum();
-
-	Ok(total_joltage)
+	get_max_joltage_rec(battery_bank, batteries_to_use, 0)
 }
 
 #[cfg(test)]
