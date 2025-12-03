@@ -2,6 +2,7 @@
 
 use std::collections::BTreeSet;
 use std::ops::RangeInclusive;
+use ahash::AHashSet;
 use anyhow::*;
 use itertools::Itertools;
 use nom::character::complete::{char, line_ending, u64};
@@ -77,7 +78,7 @@ pub fn part2(input: &str) -> Result<u64> {
 	let max_range_end = ranges.iter().map(|r| *r.end()).max().unwrap();
 
 	let mut invalid_sum = 0;
-	let mut checked_nums: BTreeSet<u64> = BTreeSet::new();
+	let mut checked_nums = AHashSet::new();
 	let mut invalid_prefix_num = 1;
 	loop{
 		let invalid_prefix = invalid_prefix_num.to_string();
