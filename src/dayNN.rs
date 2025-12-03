@@ -3,7 +3,6 @@ use anyhow::*;
 use itertools::Itertools;
 
 pub fn part1(input: &str) -> Result<u64> {
-	// TODO: Solve Part 1 of the puzzle
 	let _ = input;
 	Ok(0)
 }
@@ -17,7 +16,7 @@ pub fn part2(input: &str) -> Result<u64> {
 mod tests {
 	use crate::dayNN::*;
 
-	const TEST: &str = "<TEST-INPUT>";
+	const TEST: &str = "TEST-INPUT";
 
 	#[test]
 	fn test_part_one() -> Result<()> {
