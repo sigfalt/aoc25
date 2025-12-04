@@ -1,4 +1,6 @@
 #![allow(unused_imports)]
+
+use std::collections::VecDeque;
 use anyhow::*;
 use grid::Grid;
 use itertools::Itertools;
@@ -85,9 +87,8 @@ pub fn part1(input: &str) -> Result<u64> {
 		// there are FEWER than FOUR rolls of paper in the eight adjacent cells
 		let mut adjacent_papers = 0;
 		for (row_offset, col_offset) in Direction::iter().map(|d| d.get_offset()) {
-			match warehouse_map.get(row_offset.strict_add_unsigned(row), col_offset.strict_add_unsigned(col)) {
-				Some(&Cell::PaperRoll) => adjacent_papers += 1,
-				_ => {}
+			if let Some(Cell::PaperRoll) = warehouse_map.get(row_offset.strict_add_unsigned(row), col_offset.strict_add_unsigned(col)) {
+				adjacent_papers += 1;
 			}
 			if adjacent_papers >= 4 {
 				break;
@@ -101,8 +102,51 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let mut warehouse_map = parse(input);
+
+	// locate all paper rolls which must be checked for forklift accessibility
+	let mut locations_to_check = warehouse_map.indexed_iter().filter_map(|(grid_coords, &cell)| {
+		match cell {
+			Cell::Empty => None,
+			Cell::PaperRoll => Some(grid_coords),
+		}
+	}).collect::<VecDeque<_>>();
+
+	let mut accessible_rolls_of_paper = 0;
+	while let Some((row, col)) = locations_to_check.pop_front() {
+		// double check that this location still contains a roll of paper,
+		// as it may have been removed already
+		if *warehouse_map.get(row, col).unwrap() != Cell::PaperRoll {
+			continue;
+		}
+
+		// cache adjacent paper roll coordinates in case this roll is removed
+		// initialize with capacity 4 as once the fourth roll is inserted,
+		// this roll is inaccessible anyway and will not be removed
+		let mut adjacent_papers = Vec::with_capacity(4);
+		let mut adjacent_papers_count = 0;
+		for (row_offset, col_offset) in Direction::iter().map(|d| d.get_offset()) {
+			let adj_row = row_offset.strict_add_unsigned(row);
+			let adj_col = col_offset.strict_add_unsigned(col);
+			if let Some(Cell::PaperRoll) = warehouse_map.get(adj_row, adj_col) {
+				adjacent_papers_count += 1;
+				adjacent_papers.push((adj_row as usize, adj_col as usize));
+			}
+			if adjacent_papers_count >= 4 {
+				break;
+			}
+		}
+
+		if adjacent_papers_count < 4 {
+			accessible_rolls_of_paper += 1;
+			// remove this accessible roll of paper from the warehouse
+			*warehouse_map.get_mut(row, col).unwrap() = Cell::Empty;
+			// queue neighboring rolls of paper to be checked for accessibility again
+			locations_to_check.append(&mut adjacent_papers.into());
+		}
+	}
+
+	Ok(accessible_rolls_of_paper)
 }
 
 #[cfg(test)]
@@ -128,7 +172,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(43, part2(TEST)?);
 		Ok(())
 	}
 }
