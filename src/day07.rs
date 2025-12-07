@@ -68,8 +68,34 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let grid = parse(input);
+	
+	let mut row_iter = grid.iter_rows();
+	
+	let first_row = row_iter.by_ref().next().unwrap();
+	let mut active_beams = first_row
+		.map(|&cell| if cell == Cell::Start { 1 } else { 0 })
+		.collect_vec();
+	
+	for row in row_iter {
+		let row = row.collect_vec();
+		let mut new_beams = vec![0; row.len()];
+		for (index, active_beams) in active_beams.iter().enumerate() {
+			match row[index] {
+				Cell::Empty => {
+					new_beams[index] += active_beams;
+				},
+				Cell::Splitter => {
+					new_beams[index - 1] += active_beams;
+					new_beams[index + 1] += active_beams;
+				},
+				Cell::Start => unreachable!("Start cells only in first row"),
+			}
+		}
+		active_beams = new_beams;
+	}
+
+	Ok(active_beams.iter().sum())
 }
 
 #[cfg(test)]
@@ -101,7 +127,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(40, part2(TEST)?);
 		Ok(())
 	}
 }
