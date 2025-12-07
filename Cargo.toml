@@ -12,32 +12,32 @@ num = "0.4.3"
 itertools = "0.14.0"
 
 [dev-dependencies]
-criterion = "0.8.0"
+divan = "0.1.21"
 
 [[bench]]
-name = "bench01"
+name = "day01"
 harness = false
 
 [[bench]]
-name = "bench02"
+name = "day02"
 harness = false
 
 [[bench]]
-name = "bench03"
+name = "day03"
 harness = false
 
 [[bench]]
-name = "bench04"
+name = "day04"
 harness = false
 
 [[bench]]
-name = "bench05"
+name = "day05"
 harness = false
 
 [[bench]]
-name = "bench06"
+name = "day06"
 harness = false
 
 [[bench]]
-name = "bench07"
+name = "day07"
 harness = false
