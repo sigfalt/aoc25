@@ -41,27 +41,28 @@ fn parse(input: &str) -> Grid<Cell> {
 
 pub fn part1(input: &str) -> Result<u64> {
 	let grid = parse(input);
+
+	let mut row_iter = grid.iter_rows();
 	
 	let mut beam_splits = 0;
-	let mut active_beams = AHashSet::new();
-	for row in grid.iter_rows() {
-		let mut new_beams = AHashSet::new();
-		for (index, &cell) in row.enumerate() {
-			match cell {
-				Cell::Start => {
-					new_beams.insert(index);
-				},
+	let first_row = row_iter.by_ref().next().unwrap();
+	let mut active_beams = first_row.enumerate()
+		.filter_map(|(index, &cell)| if cell == Cell::Start { Some(index) } else { None })
+		.collect::<AHashSet<_>>();
+	
+	for row in row_iter {
+		let row = row.collect_vec();
+		
+		active_beams = active_beams.iter().flat_map(|&index| {
+			match row[index] {
+				Cell::Empty => vec![index],
 				Cell::Splitter => {
-					if active_beams.remove(&index) {
-						new_beams.insert(index - 1);
-						new_beams.insert(index + 1);
-						beam_splits += 1;
-					}
+					beam_splits += 1;
+					vec![index - 1, index + 1]
 				},
-				Cell::Empty => {},
-			};
-			active_beams = active_beams.union(&new_beams).cloned().collect();
-		}
+				Cell::Start => unreachable!("Start cells only in first row"),
+			}
+		}).collect();
 	}
 	
 	Ok(beam_splits)
