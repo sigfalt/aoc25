@@ -70,12 +70,12 @@ fn part1_internal(input: &str, wires_to_connect: usize) -> Result<u64> {
 			}
 			rec(ix, &mut circuit_ids)
 		};
-		
-		let min_id = a.min(b);
-		let max_id = a.max(b);
+
 		// are these points already part of other circuits? get root points
-		let min_root = get_root(min_id);
-		let max_root = get_root(max_id);
+		let a_root = get_root(a);
+		let b_root = get_root(b);
+		let min_root = a_root.min(b_root);
+		let max_root = a_root.max(b_root);
 		// if this has joined two circuits that were previously separate
 		if min_root != max_root {
 			// set the new root and circuit sizes
@@ -90,7 +90,49 @@ fn part1_internal(input: &str, wires_to_connect: usize) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
+	let points = parse(input);
+
+	let mut distances = points.iter().enumerate().tuple_combinations::<(_, _)>()
+		.map(|((a_ix, a), (b_ix, b))| (NotNan::new(a.distance(b)).unwrap(), (a_ix, b_ix)))
+		.collect_vec();
+	distances.sort_unstable_by_key(|(dist, _)| *dist);
+
+	let mut circuit_ids = vec![None; points.len()];
+	let mut circuit_sizes = vec![1; points.len()];
+	for (_, (a, b)) in distances.into_iter() {
+		let mut get_root = |ix: usize| -> usize {
+			fn rec(ix: usize, circuit_ids: &mut Vec<Option<usize>>) -> usize {
+				if let Some(root) = circuit_ids[ix] {
+					let new_root = rec(root, circuit_ids);
+					circuit_ids[ix] = Some(new_root);
+					new_root
+				} else {
+					ix
+				}
+			}
+			rec(ix, &mut circuit_ids)
+		};
+		
+		// are these points already part of other circuits? get root points
+		let a_root = get_root(a);
+		let b_root = get_root(b);
+		let min_root = a_root.min(b_root);
+		let max_root = a_root.max(b_root);
+		// if this has joined two circuits that were previously separate
+		if min_root != max_root {
+			// set the new root and circuit sizes
+			circuit_sizes[min_root] += circuit_sizes[max_root];
+			circuit_sizes[max_root] = 0;
+			// are we done? is the new root 0 and with a circuit size of all points
+			if min_root == 0 && circuit_sizes[min_root] == points.len() {
+				let a_x = points[a].x;
+				let b_x = points[b].x;
+				return Ok(a_x * b_x);
+			}
+			circuit_ids[max_root] = Some(min_root);
+		}
+	}
+	
 	Ok(0)
 }
 
@@ -127,7 +169,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(25272, part2(TEST)?);
 		Ok(())
 	}
 }
