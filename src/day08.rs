@@ -133,7 +133,7 @@ pub fn part2(input: &str) -> Result<u64> {
 		}
 	}
 	
-	Ok(0)
+	Err(anyhow!("circuit never became fully connected after connecting all nodes to each other?"))
 }
 
 #[cfg(test)]
