@@ -1,5 +1,7 @@
 #![allow(unused_imports)]
 use anyhow::*;
+use geo::coord;
+use geo::geometry::{Polygon, Rect};
 use itertools::Itertools;
 use nom::character::complete::{char, line_ending, u64};
 use nom::combinator::{all_consuming, opt};
@@ -7,6 +9,9 @@ use nom::IResult;
 use nom::multi::many1;
 use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
+use geo::prelude::*;
+use num::ToPrimitive;
+use ordered_float::NotNan;
 
 #[derive(Debug, Copy, Clone)]
 struct Point(u64, u64);
@@ -40,8 +45,27 @@ pub fn part1(input: &str) -> Result<u64> {
 }
 
 pub fn part2(input: &str) -> Result<u64> {
-	let _ = input;
-	Ok(0)
+	let red_tiles = parse(input);
+	let red_tile_coords = red_tiles.into_iter()
+		.map(|Point(x, y)| coord! {x: x as f64, y: y as f64})
+		.collect_vec();
+	
+	let red_polygon = Polygon::new(
+		red_tile_coords.clone().into(),
+		vec![]
+	);
+	
+	let res = red_tile_coords.iter().tuple_combinations()
+		.filter_map(|(&a, &b)| {
+			let rect = Rect::new(a, b);
+			if red_polygon.covers(&rect) {
+				Some((rect.height().to_u64().unwrap() + 1) * (rect.width().to_u64().unwrap() + 1))
+			} else {
+				None
+			}
+		}).max().unwrap();
+	
+	Ok(res)
 }
 
 #[cfg(test)]
@@ -65,7 +89,7 @@ mod tests {
 
 	#[test]
 	fn test_part_two() -> Result<()> {
-		assert_eq!(0, part2(TEST)?);
+		assert_eq!(24, part2(TEST)?);
 		Ok(())
 	}
 }

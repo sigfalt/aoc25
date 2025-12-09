@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 ahash = "0.8.12"
+geo = "0.32.0"
 grid = "1.0.0"
 itertools = "0.14.0"
 nom = "8.0.0"
