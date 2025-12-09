@@ -55,17 +55,16 @@ pub fn part2(input: &str) -> Result<u64> {
 		vec![]
 	);
 	
-	let res = red_tile_coords.iter().tuple_combinations()
-		.filter_map(|(&a, &b)| {
-			let rect = Rect::new(a, b);
-			if red_polygon.covers(&rect) {
-				Some((rect.height().to_u64().unwrap() + 1) * (rect.width().to_u64().unwrap() + 1))
-			} else {
-				None
-			}
-		}).max().unwrap();
+	let mut max_area = 0;
+	for (a, b) in red_tile_coords.into_iter().tuple_combinations() {
+		let rect = Rect::new(a, b);
+		let area = (rect.height().to_u64().unwrap() + 1) * (rect.width().to_u64().unwrap() + 1);
+		if area > max_area && red_polygon.covers(&rect) {
+			max_area = area;
+		}
+	}
 	
-	Ok(res)
+	Ok(max_area)
 }
 
 #[cfg(test)]
